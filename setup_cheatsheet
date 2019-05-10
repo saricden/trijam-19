@@ -1,0 +1,168 @@
+ENV QUICK(?) SETUP
+
+npm init
+
+npm install webpack webpack-cli webpack-dev-server @babel/core babel-loader @babel/preset-env css-loader mini-css-extract-plugin html-loader html-webpack-plugin copy-webpack-plugin --save-dev
+
+npm install phaser tmi.js --save
+
+mkdir src
+
+touch ./src/game.js
+
+// Edit scripts in package.json:
+"scripts": {
+  "start": "webpack-dev-server --mode development --entry ./src/game.js --open",
+  "build": "webpack --mode production --entry ./src/game.js --output ./dist/game.js",
+  "dev": "webpack --mode development --entry ./src/game.js --output ./dist/game.js"
+},
+
+touch webpack.config.js
+
+// <<
+
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader"
+        }
+      },
+      {
+        test: /\.html$/,
+        use: [
+          {
+            loader: "html-loader",
+            options: { minimize: true }
+          }
+        ]
+      },
+      {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, "css-loader"]
+      }
+    ]
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: "./src/index.html",
+      filename: "./index.html"
+    }),
+    new MiniCssExtractPlugin({
+      filename: "[name].css",
+      chunkFilename: "[id].css"
+    }),
+    new CopyWebpackPlugin([
+      { from: './src/assets', to: 'assets' }
+    ])
+  ]
+};
+
+// >>
+
+// ./src/game.js <<
+
+import style from './main.css';
+import Phaser, {Game} from 'phaser';
+import BootScene from './scenes/BootScene';
+import GameScene from './scenes/GameScene';
+const canvas = document.getElementById('game-canvas');
+const config = {
+  type: Phaser.AUTO,
+  width: 400,
+  height: 300,
+  canvas,
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 400 },
+      debug: true
+    }
+  },
+  scene: [
+    BootScene,
+    GameScene
+  ]
+};
+const game = new Game(config);
+
+// >>
+
+mkdir src/scenes
+
+touch src/scenes/BootScene.js
+
+touch src/scenes/GameScene.js
+
+// ./src/scenes/BootScene.js <<
+
+import {Scene} from 'phaser';
+class BootScene extends Scene {
+  constructor() {
+    super("scene-boot");
+  }
+
+  preload() {
+    // Load any assets here from your assets directory
+    this.load.image('cat-like', 'assets/cat-like-creature.png');
+  }
+  create() {
+    this.scene.start('scene-game');
+  }
+}
+export default BootScene;
+
+// >>
+
+mkdir src/assets
+
+// ./scr/scenes/GameScene.js <<
+
+import {Scene} from 'phaser';
+class GameScene extends Scene {
+  constructor() {
+    super("scene-game");
+  }
+  create() {
+    // Add, scale, and make up a speed for our creature
+    this.cat = this.physics.add.sprite(10, 10, 'cat-like');
+    this.cat.body.setAllowGravity(false);
+    this.cat.setScale(0.5);
+    this.catSpeed = 300;
+    // Create a helper object for our arrow keys
+    this.cursors = this.input.keyboard.createCursorKeys();
+  }
+  update() {
+    console.log('playing da gaem!');
+  }
+}
+
+export default GameScene;
+
+// >>
+
+touch src/index.html
+
+// <<
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>KirkzCoolGame2019</title>
+  </head>
+  <body>
+    <canvas id="game-canvas">You need JS bruh.</canvas>
+  </body>
+</html>
+
+// >>
+
+touch src/main.css
